@@ -1,5 +1,4 @@
 import numpy as np
-import torch
 from ultralytics import YOLO
 from pathlib import Path
 import pandas as pd
@@ -8,8 +7,11 @@ from datetime import datetime
 from itertools import product
 import random
 
+# Import configurations from your project
+from config import MODEL_CONFIG, TRAINING_CONFIG, LOGGING_CONFIG
+
 class TrafficDetectionTrainer:
-    def __init__(self, model_name='yolov8n.pt', log_dir='logs', config=None):
+    def __init__(self, model_name=None, log_dir='logs', config=None):
         """
         Initialize the Traffic Detection Trainer.
         
@@ -18,21 +20,33 @@ class TrafficDetectionTrainer:
             log_dir (str): Directory to store log files.
             config (dict): Optional configuration dictionary for training parameters.
         """
-        self.model_name = model_name
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'  # YOLOv8 accepts string device
+        self.model_name = model_name or MODEL_CONFIG.get('model_name', 'yolov8n.pt')
+        # Device selection for macOS
+        try:
+            import torch
+            if torch.backends.mps.is_available():
+                self.device = 'mps'  # Use MPS for Apple Silicon
+            elif torch.cuda.is_available():
+                self.device = 'cuda'  # Fallback to CUDA (unlikely on macOS)
+            else:
+                self.device = 'cpu'  # Default to CPU
+        except ImportError:
+            self.device = 'cpu'  # Fallback if torch is not installed
         self.model = None
-        self.config = config or {}
-        
+        self.config = config or TRAINING_CONFIG
+
         # Setup logging
         Path(log_dir).mkdir(exist_ok=True)
         log_file = Path(log_dir) / f'tuning_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'
         logging.basicConfig(
             filename=str(log_file),
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s'
+            level=LOGGING_CONFIG.get('level', logging.INFO),
+            format=LOGGING_CONFIG.get('format', '%(asctime)s - %(levelname)s - %(message)s')
         )
         self.logger = logging.getLogger(__name__)
-        self.logger.info(f"Initialized trainer with model: {model_name}, device: {self.device}")
+        self.logger.info(f"Initialized trainer with model: {self.model_name}, device: {self.device}")
+        print(f"Using device: {self.device}")
+        print(f"Model: {self.model_name}")
 
     def fine_tune_hyperparameters(self, config_path, trials=10, save_results=True, results_file='tuning_results.csv'):
         """
@@ -61,16 +75,16 @@ class TrafficDetectionTrainer:
 
         # Define parameter ranges
         param_ranges = {
-            'lr0': [0.0005, 0.001, 0.005, 0.01, 0.05, 0.1],
-            'momentum': [0.8, 0.85, 0.9, 0.95],
-            'weight_decay': [0.0, 0.0001, 0.0005, 0.001]
+            'lr0': self.config.get('learning_rate_range', [0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]),
+            'momentum': self.config.get('momentum_range', [0.8, 0.85, 0.9, 0.95]),
+            'weight_decay': self.config.get('weight_decay_range', [0.0, 0.0001, 0.0005, 0.001])
         }
 
         # Default training parameters
         default_params = {
             'epochs': self.config.get('epochs', 20),
             'batch': self.config.get('batch_size', 16),
-            'imgsz': self.config.get('image_size', 640)
+            'imgsz': MODEL_CONFIG.get('image_size', 640)
         }
 
         best_score = 0
@@ -104,7 +118,7 @@ class TrafficDetectionTrainer:
                     device=self.device,
                     verbose=False,
                     project='runs/tune',
-                    name=f'trial_{trial}_{datetime.now().strftime("%Y%m%d_%H%M%S")}_{trial:03d}',  # Unique name
+                    name=f'trial_{trial}_{datetime.now().strftime("%Y%m%d_%H%M%S")}_{trial:03d}',
                     **trial_params
                 )
 
