@@ -8,7 +8,7 @@ from itertools import product
 import random
 
 # Import configurations from your project
-from config import MODEL_CONFIG, TRAINING_CONFIG, LOGGING_CONFIG
+from data_preparer import MODEL_CONFIG, TRAINING_CONFIG, LOGGING_CONFIG  # Sửa import
 
 class TrafficDetectionTrainer:
     def __init__(self, model_name=None, log_dir='logs', config=None):

@@ -1,4 +1,3 @@
-cat <<EOL > traffic_density.py
 # traffic_density.py - Estimate traffic density using YOLO
 from ultralytics import YOLO
 import cv2
@@ -27,4 +26,3 @@ def estimate_traffic_density(video_path, model_path='yolov8n.pt'):
 
 if __name__ == "__main__":
     estimate_traffic_density('sample_video.mp4')
-EOL

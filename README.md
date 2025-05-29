@@ -21,3 +21,23 @@ A computer vision project for traffic detection using YOLO.
 ## Requirements
 See `requirements.txt` for dependencies.
 EOL
+# Traffic Detection Project
+
+This project implements a Deep Learning-based system for vehicle detection and classification using YOLOv8.
+
+## Project Structure
+- `data_preparer.py`: Project configuration and directory setup
+- `model_trainer.py`: Model training and export
+- `video_processor.py`: Hyperparameter tuning
+- `model_loader.py`: Load YOLO model
+- `traffic_density.py`: Estimate traffic density
+- `vehicle_classifier.py`: Classify vehicles and save to database
+- `realtime_processor.py`: Real-time webcam processing
+- `app.py`: FastAPI for vehicle detection API
+- `dashboard.py`: Streamlit dashboard for visualization
+- `report_generator.py`: Generate statistical reports
+
+## Setup
+1. Install dependencies:
+   ```bash
+   pip install -r requirements.txt

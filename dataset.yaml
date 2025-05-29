@@ -1,7 +1,0 @@
-mkdir -p data
-cat <<EOL > data/dataset.yaml
-train: ./data/train/images
-val: ./data/val/images
-nc: 3
-names: ['car', 'truck', 'bus']
-EOL
