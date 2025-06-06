@@ -1,90 +1,76 @@
 import os
+import logging
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).parent
+# Cấu hình cơ bản
+PROJECT_ROOT = Path(__file__).resolve().parent
 DATA_DIR = PROJECT_ROOT / "data"
-MODEL_DIR = PROJECT_ROOT / "models"
+MODELS_DIR = PROJECT_ROOT / "models"
 OUTPUT_DIR = PROJECT_ROOT / "output"
 TEMP_DIR = PROJECT_ROOT / "temp"
+LOGS_DIR = PROJECT_ROOT / "logs"
 
-for directory in [DATA_DIR, MODEL_DIR, OUTPUT_DIR, TEMP_DIR]:
-    directory.mkdir(exist_ok=True)
+# Tạo các thư mục cơ bản với xử lý ngoại lệ
+for directory in [DATA_DIR, MODELS_DIR, OUTPUT_DIR, TEMP_DIR, LOGS_DIR]:
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+    except PermissionError as e:
+        print(f"Warning: Cannot create directory {directory}: {e}. Continuing with existing setup.")
 
+# Cấu hình mô hình
 MODEL_CONFIG = {
     'model_name': 'yolov8n.pt',
     'image_size': 640,
     'confidence_threshold': 0.5,
-    'iou_threshold': 0.45,
-    'max_detections': 100
+    'vehicle_classes': {0: 'car', 1: 'motorcycle', 2: 'bus', 3: 'truck', 4: 'bicycle'}  # Sửa key thành integer
 }
 
-TRAINING_CONFIG = {
-    'epochs': 100,
-    'batch_size': 16,
-    'learning_rate': 0.01,
-    'momentum': 0.937,
-    'weight_decay': 0.0005,
-    'patience': 20,
-    'save_period': 10
-}
-
-VEHICLE_CLASSES = {
-    0: 'car',
-    1: 'motorcycle', 
-    2: 'bus',
-    3: 'truck',
-    4: 'bicycle'
-}
-
-CLASS_COLORS = {
-    'car': (0, 255, 0),
-    'motorcycle': (255, 0, 0),
-    'bus': (0, 0, 255),
-    'truck': (255, 255, 0),
-    'bicycle': (255, 0, 255)
-}
-
-API_CONFIG = {
-    'host': '0.0.0.0',
-    'port': 8000,
-    'title': 'Traffic Detection API',
-    'version': '1.0.0',
-    'description': 'API for vehicle detection and classification in traffic'
-}
-
-DASHBOARD_CONFIG = {
-    'title': '🚗 Traffic Vehicle Detection Dashboard',
-    'page_icon': '🚗',
-    'layout': 'wide',
-    'sidebar_title': 'Controls'
-}
-
+# Cấu hình video
 VIDEO_CONFIG = {
     'fps': 30,
-    'codec': 'mp4v',
-    'max_frame_width': 1920,
-    'max_frame_height': 1080,
-    'webcam_index': 0
+    'scale_factor': 0.01,  # Hệ số tỷ lệ để tính tốc độ (cần hiệu chỉnh)
+    'video_width': 1280,
+    'video_height': 720,
+    'roi': [0, int(0.6 * 720), 1280, 720]  # [x_min, y_min, x_max, y_max]
 }
 
+# Cập nhật ROI dựa trên chiều rộng và chiều cao video
+def update_roi():
+    """Cập nhật ROI dựa trên video_width và video_height."""
+    width = VIDEO_CONFIG['video_width']
+    height = VIDEO_CONFIG['video_height']
+    if width <= 0 or height <= 0:
+        print(f"Warning: Invalid video dimensions (width={width}, height={height}). Using default ROI.")
+        return
+    VIDEO_CONFIG['roi'] = [0, int(0.6 * height), width, height]
+
+update_roi()  # Gọi hàm để cập nhật ROI ngay từ đầu
+
+# Cấu hình tốc độ
+SPEED_CONFIG = {
+    'speed_limit': 60.0,  # Giới hạn tốc độ (km/h)
+    'distance_per_pixel': 0.01  # Khoảng cách thực tế trên mỗi pixel (m/pixel, cần hiệu chỉnh)
+}
+
+# Cấu hình cơ sở dữ liệu
 DATABASE_CONFIG = {
-    'type': 'sqlite',
     'path': DATA_DIR / 'traffic_data.db',
-    'tables': {
-        'detections': 'detections',
-        'statistics': 'statistics',
-        'sessions': 'sessions'
-    }
+    'table_name': 'detections'
 }
 
+# Cấu hình logging
 LOGGING_CONFIG = {
-    'level': 'INFO',
+    'level': logging.INFO,
     'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    'log_file': PROJECT_ROOT / 'logs' / 'traffic_detection.log'
+    'handlers': [
+        RotatingFileHandler(LOGS_DIR / 'traffic.log', maxBytes=10*1024*1024, backupCount=5),
+        logging.StreamHandler()
+    ]
 }
 
-(PROJECT_ROOT / 'logs').mkdir(exist_ok=True)
+# Khởi tạo logging sau khi đảm bảo thư mục LOGS_DIR tồn tại
+logging.basicConfig(**LOGGING_CONFIG)
 
-DEBUG_MODE = os.getenv('DEBUG', 'False').lower() == 'true'
-CUDA_AVAILABLE = os.getenv('CUDA_AVAILABLE', 'auto')
-MAX_UPLOAD_SIZE = int(os.getenv('MAX_UPLOAD_SIZE', 100 * 1024 * 1024))
+# Export cấu hình
+__all__ = ['MODEL_CONFIG', 'VIDEO_CONFIG', 'SPEED_CONFIG', 'DATABASE_CONFIG', 'LOGGING_CONFIG']
