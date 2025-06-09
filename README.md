@@ -41,3 +41,17 @@ This project implements a Deep Learning-based system for vehicle detection and c
 1. Install dependencies:
    ```bash
    pip install -r requirements.txt
+   ```
+
+2. Download YOLOv8n model:
+   ```bash
+   mkdir -p models
+   curl -L https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.pt -o models/yolov8n.pt
+   ```
+
+3. Run the application:
+   ```bash
+   python app.py
+   ```
+
+4. Access the web interface at http://localhost:8000
