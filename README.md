@@ -1,57 +1,111 @@
-# ProjectA
+# Traffic Speed Detection System
 
-cat <<EOL > README.md
-# ProjectA - Traffic Detection System
+Hệ thống phát hiện tốc độ phương tiện giao thông sử dụng YOLOv8 và OpenCV.
 
-A computer vision project for traffic detection using YOLO.
+## Tính năng
 
-## Features
-- **Video Processing**: Detect vehicles in videos (`video_processor.py`).
-- **Model Training**: Train YOLO models (`model_trainer.py`).
-- **Traffic Density Estimation**: Count vehicles in videos (`traffic_density.py`).
-- **Vehicle Classification**: Classify vehicles (car, truck, bus) (`vehicle_classifier.py`).
-- **Web Interface**: Visualize detections via FastAPI (`app.py`).
-- **YOLOv5 Support**: Load YOLOv5 models (`yolov5.py`).
+- Phát hiện và theo dõi phương tiện trong video
+- Tính toán tốc độ của phương tiện
+- Ghi nhận các vi phạm tốc độ
+- Giao diện web thân thiện với người dùng
+- Thống kê và biểu đồ trực quan
+- Quản lý video và vi phạm
 
-## Setup
-1. Install dependencies: `pip install -r requirements.txt`
-2. Run the web app: `uvicorn app:app --host 0.0.0.0 --port 8000`
-3. Access the API at `http://localhost:8000/docs`
+## Yêu cầu hệ thống
 
-## Requirements
-See `requirements.txt` for dependencies.
-EOL
-# Traffic Detection Project
+- Python 3.8+
+- Node.js 14+
+- npm 6+
 
-This project implements a Deep Learning-based system for vehicle detection and classification using YOLOv8.
+## Cài đặt
 
-## Project Structure
-- `data_preparer.py`: Project configuration and directory setup
-- `model_trainer.py`: Model training and export
-- `video_processor.py`: Hyperparameter tuning
-- `model_loader.py`: Load YOLO model
-- `traffic_density.py`: Estimate traffic density
-- `vehicle_classifier.py`: Classify vehicles and save to database
-- `realtime_processor.py`: Real-time webcam processing
-- `app.py`: FastAPI for vehicle detection API
-- `dashboard.py`: Streamlit dashboard for visualization
-- `report_generator.py`: Generate statistical reports
+1. Clone repository:
+```bash
+git clone <repository-url>
+cd traffic-speed-detection
+```
 
-## Setup
-1. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+2. Cài đặt dependencies cho backend:
+```bash
+cd server
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-2. Download YOLOv8n model:
-   ```bash
-   mkdir -p models
-   curl -L https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.pt -o models/yolov8n.pt
-   ```
+3. Cài đặt dependencies cho frontend:
+```bash
+cd ../client
+npm install
+```
 
-3. Run the application:
-   ```bash
-   python app.py
-   ```
+## Cấu hình
 
-4. Access the web interface at http://localhost:8000
+1. Backend (server/app.py):
+- Port mặc định: 5000
+- Upload directory: server/uploads
+- Database: SQLite (detections.db)
+
+2. Frontend (client):
+- Port mặc định: 3000
+- Proxy đến backend: http://localhost:5000
+
+## Chạy ứng dụng
+
+1. Khởi động backend:
+```bash
+cd server
+source venv/bin/activate  # Windows: venv\Scripts\activate
+python app.py
+```
+
+2. Khởi động frontend (trong terminal mới):
+```bash
+cd client
+npm start
+```
+
+3. Truy cập ứng dụng:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5000
+
+## Sử dụng
+
+1. Upload video:
+- Truy cập trang chủ
+- Click nút "Upload Video"
+- Chọn file video (.mp4, .avi, .mov)
+- Chờ xử lý
+
+2. Xem kết quả:
+- Danh sách video đã xử lý
+- Chi tiết vi phạm
+- Thống kê và biểu đồ
+- Tải xuống báo cáo
+
+## Cấu trúc dự án
+
+```
+traffic-speed-detection/
+├── client/                 # Frontend React
+│   ├── public/
+│   ├── src/
+│   └── package.json
+├── server/                 # Backend Flask
+│   ├── api/
+│   ├── utils/
+│   ├── models/
+│   ├── static/
+│   ├── uploads/
+│   └── app.py
+├── requirements.txt
+└── README.md
+```
+
+## Đóng góp
+
+Vui lòng đọc [CONTRIBUTING.md](CONTRIBUTING.md) để biết thêm chi tiết về quy trình đóng góp.
+
+## Giấy phép
+
+Dự án này được phân phối dưới giấy phép MIT. Xem file [LICENSE](LICENSE) để biết thêm chi tiết.

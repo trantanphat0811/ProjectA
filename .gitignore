@@ -1,23 +1,86 @@
 # Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
 .Python
 env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
 venv/
-.env
+ENV/
 
-# Data and models
-data/
-models/
-output/
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project specific
 temp/
-logs/
-*.pt
-*.onnx
+uploads/*
+!uploads/.gitkeep
+static/processed/*
+!static/processed/.gitkeep
+static/violations/*
+!static/violations/.gitkeep
+logs/*
+!logs/.gitkeep
 *.db
+*.pt
 
-# Miscellaneous
-*.log
+# OS specific
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Video files
+*.mp4
+*.avi
+*.mov
+*.wmv
+*.flv
+*.mkv
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Project specific
+uploads/*
+!uploads/.gitkeep
+logs/*
+!logs/.gitkeep
+*.mp4
+*.zip
+*.pt
+detections.db
+temp/
+output/
+.DS_Store
+__MACOSX/

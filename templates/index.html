@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Speed Detection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .upload-form {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 2rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .progress {
+            display: none;
+            margin-top: 1rem;
+        }
+        #uploadStatus {
+            margin-top: 1rem;
+            display: none;
+        }
+        .violations-table {
+            margin-top: 2rem;
+        }
+        .error-message {
+            color: #dc3545;
+            margin-top: 1rem;
+            display: none;
+        }
+        .violation-image {
+            max-width: 200px;
+            cursor: pointer;
+        }
+        .modal-image {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mt-4">Traffic Speed Detection System</h1>
+        
+        <div class="upload-form">
+            <h3>Upload Video</h3>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="video" class="form-label">Select video file (MP4, AVI, MOV)</label>
+                    <input type="file" class="form-control" id="video" name="video" accept=".mp4,.avi,.mov" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Upload and Process</button>
+            </form>
+            
+            <div class="progress">
+                <div class="progress-bar" role="progressbar" style="width: 0%">0%</div>
+            </div>
+            
+            <div id="uploadStatus" class="alert alert-info"></div>
+            <div id="errorMessage" class="error-message"></div>
+        </div>
+
+        <div class="violations-table">
+            <h3>Detected Violations</h3>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Track ID</th>
+                        <th>Speed (km/h)</th>
+                        <th>Frame</th>
+                        <th>Timestamp</th>
+                        <th>Confidence</th>
+                        <th>Image</th>
+                    </tr>
+                </thead>
+                <tbody id="violationsTable">
+                </tbody>
+            </table>
+        </div>
+        </div>
+
+    <!-- Image Modal -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imageModalLabel">Violation Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img src="" class="modal-image" id="modalImage">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const fileInput = document.getElementById('video');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showError('Please select a file');
+                return;
+            }
+            
+            // Check file size (500MB limit)
+            if (file.size > 500 * 1024 * 1024) {
+                showError('File size exceeds 500MB limit');
+                return;
+            }
+
+            formData.append('video', file);
+            
+            const progress = document.querySelector('.progress');
+            const progressBar = document.querySelector('.progress-bar');
+            const uploadStatus = document.getElementById('uploadStatus');
+            
+            progress.style.display = 'flex';
+            uploadStatus.style.display = 'block';
+            uploadStatus.textContent = 'Uploading...';
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                    onUploadProgress: (progressEvent) => {
+                        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                        progressBar.style.width = percentCompleted + '%';
+                        progressBar.textContent = percentCompleted + '%';
+                    }
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Upload failed');
+                }
+                
+                const result = await response.json();
+                uploadStatus.className = 'alert alert-success';
+                uploadStatus.textContent = 'Video processed successfully!';
+                
+                // Update violations table
+                await updateViolationsTable();
+                
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                progress.style.display = 'none';
+            }
+        });
+        
+        async function updateViolationsTable() {
+            try {
+                const response = await fetch('/violations');
+                const violations = await response.json();
+                
+                const tbody = document.getElementById('violationsTable');
+                tbody.innerHTML = '';
+                
+                violations.forEach(v => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${v.id}</td>
+                        <td>${v.track_id}</td>
+                        <td>${v.speed.toFixed(2)}</td>
+                        <td>${v.frame_number}</td>
+                        <td>${v.timestamp}</td>
+                        <td>${(v.confidence * 100).toFixed(1)}%</td>
+                        <td>
+                            ${v.image_file ? `
+                                <img src="/static/violations/${v.image_file}" 
+                                     class="violation-image" 
+                                     onclick="showImage('/static/violations/${v.image_file}', ${v.track_id})">
+                            ` : 'No image'}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                showError('Failed to load violations');
+            }
+        }
+        
+        function showImage(src, trackId) {
+            const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+            const modalImage = document.getElementById('modalImage');
+            const modalTitle = document.getElementById('imageModalLabel');
+            
+            modalImage.src = src;
+            modalTitle.textContent = `Violation Details - Vehicle ID: ${trackId}`;
+            modal.show();
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Load violations on page load
+        updateViolationsTable();
+    </script>
+</body>
+</html> 
